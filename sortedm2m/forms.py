@@ -5,6 +5,11 @@ from django.template.loader import render_to_string
 from django.utils.encoding import force_str
 from django.utils.html import conditional_escape
 from django.utils.safestring import mark_safe
+from django.forms.renderers import DjangoTemplates
+from django.utils.datastructures import MultiValueDict
+from django.utils.safestring import SafeString
+from sortedm2m_tests.models import Book
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 
 class SortedCheckboxSelectMultiple(forms.CheckboxSelectMultiple):
@@ -19,6 +24,7 @@ class SortedCheckboxSelectMultiple(forms.CheckboxSelectMultiple):
         )}
 
     def build_attrs(self, attrs=None, **kwargs):  # pylint: disable=arguments-differ
+        # type: (Optional[Dict[str, str]], **Any) -> Dict[str, str]
         attrs = dict(attrs or {}, **kwargs)
         attrs = super().build_attrs(attrs)
         classes = attrs.setdefault('class', '').split()
@@ -27,6 +33,7 @@ class SortedCheckboxSelectMultiple(forms.CheckboxSelectMultiple):
         return attrs
 
     def render(self, name, value, attrs=None, choices=(), renderer=None):  # pylint: disable=arguments-differ
+        # type: (str, None, Optional[Dict[str, str]], Tuple, Optional[DjangoTemplates]) -> SafeString
         if value is None:
             value = []
         has_id = attrs and 'id' in attrs
@@ -77,6 +84,7 @@ class SortedCheckboxSelectMultiple(forms.CheckboxSelectMultiple):
         return mark_safe(html)
 
     def value_from_datadict(self, data, files, name):
+        # type: (Dict[str, Union[str, List[Any], List[str], List[int]]], MultiValueDict, str) -> Union[List[int], List[str]]
         value = data.get(name, None)
         if isinstance(value, (str,)):
             return [v for v in value.split(',') if v]
@@ -87,6 +95,7 @@ class SortedMultipleChoiceField(forms.ModelMultipleChoiceField):
     widget = SortedCheckboxSelectMultiple
 
     def clean(self, value):
+        # type: (Union[List[int], List[str]]) -> List[Book]
         queryset = super().clean(value)
         if value is None or not hasattr(queryset, '__iter__'):
             return queryset
@@ -95,6 +104,7 @@ class SortedMultipleChoiceField(forms.ModelMultipleChoiceField):
         return [objects[force_str(val)] for val in value]
 
     def has_changed(self, initial, data):
+        # type: (List[int], List[str]) -> bool
         if initial is None:
             initial = []
         if data is None:

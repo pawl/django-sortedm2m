@@ -12,6 +12,12 @@ from django.utils.translation import gettext_lazy as _
 
 from .compat import get_rel
 from .forms import SortedMultipleChoiceField
+from django.forms.models import ModelMultipleChoiceField
+from example.testapp.models import BaseCarThrough, Car
+from sortedm2m.forms import SortedMultipleChoiceField
+from sortedm2m_tests.migrations_tests.models import Photo
+from sortedm2m_tests.models import BaseBookThrough, Book
+from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
 SORT_VALUE_FIELD_NAME = 'sort_value'
 
@@ -148,6 +154,7 @@ def create_sorted_many_related_manager(superclass, rel, *args, **kwargs):
 
 class SortedManyToManyDescriptor(ManyToManyDescriptor):
     def __init__(self, field):
+        # type: (SortedManyToManyField) -> None
         super().__init__(field.remote_field)
 
     @cached_property
@@ -176,6 +183,7 @@ class SortedManyToManyField(_ManyToManyField):
     """
 
     def __init__(self, to, sorted=True, base_class=None, **kwargs):  # pylint: disable=redefined-builtin
+        # type: (Union[Type[Car], Type[Book], Type[Photo], str], bool, Optional[Union[Type[BaseCarThrough], Type[BaseBookThrough]]], **Any) -> None
         self.sorted = sorted
         self.sort_value_field_name = kwargs.pop(
             'sort_value_field_name',
@@ -189,6 +197,7 @@ class SortedManyToManyField(_ManyToManyField):
             self.help_text = kwargs.get('help_text', None)
 
     def deconstruct(self):
+        # type: () -> Union[Tuple[None, str, List[Any], Dict[str, Union[str, bool]]], Tuple[None, str, List[Any], Dict[str, Optional[str]]], Tuple[str, str, List[Any], Dict[str, Union[str, bool]]], Tuple[str, str, List[Any], Dict[str, Optional[str]]]]
         # We have to persist custom added options in the ``kwargs``
         # dictionary. For readability only non-default values are stored.
         name, path, args, kwargs = super().deconstruct()
@@ -199,12 +208,14 @@ class SortedManyToManyField(_ManyToManyField):
         return name, path, args, kwargs
 
     def check(self, **kwargs):
+        # type: (**Any) -> List[Any]
         return (
             super().check(**kwargs) +
             self._check_through_sortedm2m()
         )
 
     def _check_through_sortedm2m(self):
+        # type: () -> List[Any]
         rel = get_rel(self)
 
         # Check if the custom through model of a SortedManyToManyField as a
@@ -219,6 +230,7 @@ class SortedManyToManyField(_ManyToManyField):
 
     # pylint: disable=inconsistent-return-statements
     def contribute_to_class(self, cls, name, **kwargs):
+        # type: (Any, str, **Any) -> None
         if not self.sorted:
             return super().contribute_to_class(cls, name, **kwargs)
 
@@ -264,6 +276,7 @@ class SortedManyToManyField(_ManyToManyField):
         return 'ManyToManyField'
 
     def formfield(self, **kwargs):  # pylint: disable=arguments-differ
+        # type: (**Any) -> Union[ModelMultipleChoiceField, SortedMultipleChoiceField]
         defaults = {}
         if self.sorted:
             defaults['form_class'] = SortedMultipleChoiceField
